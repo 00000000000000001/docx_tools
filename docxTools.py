@@ -3,7 +3,7 @@ from docx.text.paragraph import Paragraph
 from docx.oxml.shared import OxmlElement
 
 
-def docText(doc):
+def doc_text(doc):
     fullText = ""
     for para in doc.paragraphs:
         fullText += para.text
@@ -16,13 +16,13 @@ def duplicate(p):
     return p_new
 
 
-def deleteParagraph(paragraph):
+def delete_paragraph(paragraph):
     p = paragraph._element
     p.getparent().remove(p)
     paragraph._p = paragraph._element = None
 
 
-def appendParagraph(paragraph, text=None, style=None):
+def append_paragraph(paragraph, text=None, style=None):
     try:
         """Insert a new paragraph after the given paragraph."""
         new_p = OxmlElement("w:p")
