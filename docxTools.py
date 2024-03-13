@@ -5,8 +5,8 @@ from docx.oxml.shared import OxmlElement
 
 def doc_text(doc):
     fullText = ""
-    for para in doc.paragraphs:
-        fullText += para.text
+    for p in doc.paragraphs:
+        fullText += p.text
     return fullText
 
 
@@ -114,36 +114,37 @@ def remove_run(run, p):
 
 
 def rm(m, n, p):
-    # Validate input ranges.
-    if m < 0 or n > len(p.text) - 1 or m > n:
+    if m < 0 or n > len(p.text) - 1:
         return
 
-    # Find the runs where the start and end positions are located.
     r_start = in_which_run_is(m, p)
     r_finish = in_which_run_is(n, p)
-    if r_start is None or r_finish is None:
+
+    if r_start == None or r_finish == None:
         return None
 
-    # Calculate the precise start and end positions within their respective runs.
-    a_start = at_which_position_in_its_run_is(m, p)
-    a_finish = at_which_position_in_its_run_is(n, p)
+    a = -1
+    o = -1
+    arr = []
 
-    # Case when both start and end positions are within the same run.
+    for i in range(r_start, r_finish + 1):
+        run = p.runs[i]
+
+        if i == r_start:
+            a = at_which_position_in_its_run_is(m, p)
+        if i == r_finish:
+            o = at_which_position_in_its_run_is(n, p)
+        if i > r_start and i < r_finish:
+            arr.append(run)
+
     if r_start == r_finish:
-        p.runs[r_start].text = (
-            p.runs[r_start].text[:a_start] + p.runs[r_finish].text[a_finish + 1 :]
-        )
-        return p
+        p.runs[r_start].text = p.runs[r_start].text[:a] + p.runs[r_finish].text[o + 1 :]
+    else:
+        p.runs[r_start].text = p.runs[r_start].text[:a]
+        p.runs[r_finish].text = p.runs[r_finish].text[o + 1 :]
+    for run in reversed(arr):
+        remove_run(run, p)
 
-    # Otherwise, adjust the text in the start and end runs accordingly.
-    p.runs[r_start].text = p.runs[r_start].text[:a_start]
-    p.runs[r_finish].text = p.runs[r_finish].text[a_finish + 1 :]
-
-    # Remove all runs that are fully within the range to be removed.
-    for i in range(r_start + 1, r_finish):
-        remove_run(p.runs[i], p)
-
-    # This assumes `remove_run` adjusts the indexing in `p.runs` correctly.
     return p
 
 
