@@ -1,6 +1,6 @@
 import copy
+from docx.oxml import OxmlElement
 from docx.text.paragraph import Paragraph
-from docx.oxml.shared import OxmlElement
 
 
 def doc_text(doc):
@@ -118,7 +118,7 @@ def duplicate(p):
     Dupliziert ein gegebenes Objekt `p` tiefgehend und fügt das duplizierte Objekt in die Sequenz direkt nach `p` ein.
 
     Parameters:
-    - param p: Das Objekt, das dupliziert werden soll. 
+    - param p: Das Objekt, das dupliziert werden soll.
       Dieses Objekt muss ein Attribut `_p` haben, welches wiederum die Methode `addnext` unterstützen muss, um das duplizierte Objekt in die Sequenz einfügen zu können.
 
     Return:
@@ -128,11 +128,10 @@ def duplicate(p):
     - raises AttributeError: Wenn das übergebene Objekt `p` nicht das erforderliche Attribut `_p` oder die Methode `addnext` besitzt.
     - raises CopyError: Wenn der tiefe Kopiervorgang (deep copy) fehlschlägt.
     """
-    import copy
+
     p_new = copy.deepcopy(p)
     p._p.addnext(p_new._p)
     return p_new
-
 
 
 def delete_paragraph(paragraph):
@@ -157,7 +156,6 @@ def delete_paragraph(paragraph):
     paragraph._p = paragraph._element = None
 
 
-
 def append_paragraph(paragraph, text=None, style=None):
     """
     Fügt einen neuen Absatz nach einem gegebenen Absatz hinzu. Optional kann der Text und der Stil des neuen Absatzes spezifiziert werden.
@@ -175,9 +173,6 @@ def append_paragraph(paragraph, text=None, style=None):
     - raises Exception: Wenn beim Einfügen des neuen Absatzes ein Fehler auftritt, wird eine allgemeine Exception geworfen.
     """
     try:
-        from docx.oxml import OxmlElement
-        from docx.text.paragraph import Paragraph
-
         new_p = OxmlElement("w:p")
         paragraph._p.addnext(new_p)
         new_para = Paragraph(new_p, paragraph._parent)
@@ -190,14 +185,13 @@ def append_paragraph(paragraph, text=None, style=None):
         print(f"Error when inserting paragraph: {e}")
 
 
-
 def delete_paragraph(paragraph):
     """
     Entfernt einen Absatz aus seinem übergeordneten Element im Dokument. Diese Funktion ändert die internen Referenzen des Absatzobjektes,
     indem sie `_element` und `_p` auf `None` setzt, um anzuzeigen, dass der Absatz nicht länger Teil des Dokuments ist.
 
     Parameters:
-    - param paragraph: Das Absatzobjekt, das aus dem Dokument entfernt werden soll. 
+    - param paragraph: Das Absatzobjekt, das aus dem Dokument entfernt werden soll.
       Das Objekt muss über ein `_element`-Attribut verfügen, das das XML-Element des Absatzes darstellt.
 
     Return:
@@ -212,18 +206,17 @@ def delete_paragraph(paragraph):
     paragraph._p = paragraph._element = None
 
 
-
 def in_which_run_is(m, p):
     """
     Bestimmt den Index des Textlaufs (`run`), in dem sich das Zeichen an Position 'm' im Text des Absatzes 'p' befindet.
 
     Parameters:
     - param m: Die Position des Zeichens im Gesamttext des Absatzes, für die der zugehörige Textlauf ermittelt werden soll.
-    - param p: Das Absatzobjekt, das die Textläufe (`runs`) enthält. Es wird erwartet, dass dieses Objekt eine Eigenschaft `text` für den Gesamttext 
+    - param p: Das Absatzobjekt, das die Textläufe (`runs`) enthält. Es wird erwartet, dass dieses Objekt eine Eigenschaft `text` für den Gesamttext
       und eine Liste `runs` für die Textläufe hat.
 
     Return:
-    - return: Der Index des Textlaufs, der das Zeichen an Position 'm' enthält, oder `None`, wenn 'm' außerhalb der Grenzen des Absatztextes liegt 
+    - return: Der Index des Textlaufs, der das Zeichen an Position 'm' enthält, oder `None`, wenn 'm' außerhalb der Grenzen des Absatztextes liegt
       oder kein entsprechender Textlauf gefunden wird.
 
     Raises:
@@ -245,7 +238,6 @@ def in_which_run_is(m, p):
     return None
 
 
-
 def at_which_position_in_its_run_is(m, p):
     """
     Ermittelt die Position des Zeichens an der Stelle 'm' innerhalb seines Textlaufs im Absatz 'p'.
@@ -264,7 +256,9 @@ def at_which_position_in_its_run_is(m, p):
     if m < 0 or m >= len(p.text):
         return None
 
-    cumulative_length = 0  # Hält die kumulative Länge des Textes bis zum aktuellen Lauf.
+    cumulative_length = (
+        0  # Hält die kumulative Länge des Textes bis zum aktuellen Lauf.
+    )
     for _, run in enumerate(p.runs):
         previous_cumulative_length = cumulative_length
         cumulative_length += len(run.text)
@@ -276,7 +270,6 @@ def at_which_position_in_its_run_is(m, p):
 
     # Für den Fall, dass 'm' irgendwie außerhalb der Gesamttextlänge liegt (was durch die anfängliche Überprüfung abgefangen werden sollte).
     return None
-
 
 
 def cp(m, n, p_src, p_dest):
@@ -292,7 +285,6 @@ def cp(m, n, p_src, p_dest):
     Raises:
     - Es werden keine spezifischen Exceptions direkt von dieser Funktion ausgelöst, aber die Funktion gibt `None` zurück, wenn `m` oder `n` außerhalb der gültigen Grenzen liegen, oder wenn die Start- und Endläufe nicht gefunden werden können.
     """
-    import copy
 
     # Überprüfung, ob die Start- und Endpositionen innerhalb des gültigen Bereichs des Textes liegen.
     if m < 0 or n > len(p_src.text):
@@ -321,7 +313,6 @@ def cp(m, n, p_src, p_dest):
         p_dest._p.append(r_copy)
 
 
-
 def remove_run(run, p):
     """
     Entfernt einen spezifischen Textlauf (`run`) aus einem Absatz (`p`). Diese Funktion durchläuft die Textläufe des Absatzes rückwärts,
@@ -337,7 +328,7 @@ def remove_run(run, p):
     - return: Das Textlauf-Objekt `run`, wenn es gefunden und erfolgreich entfernt wurde. Gibt `None` zurück, wenn der Textlauf im Absatz nicht gefunden wurde.
 
     Raises:
-    - Es werden keine Exceptions direkt von dieser Funktion ausgelöst, aber durch die Verwendung von Attributen wie `_r` und `_p` besteht eine implizite 
+    - Es werden keine Exceptions direkt von dieser Funktion ausgelöst, aber durch die Verwendung von Attributen wie `_r` und `_p` besteht eine implizite
       Abhängigkeit von der Struktur des Absatz- und Textlaufobjekts, die bei Nichteinhaltung zu Fehlern führen kann.
     """
     i = len(p.runs) - 1
@@ -347,7 +338,6 @@ def remove_run(run, p):
             return run
         i -= 1
     return None
-
 
 
 def rm(m, n, p):
@@ -405,7 +395,6 @@ def rm(m, n, p):
     return p
 
 
-
 def mv(m, n, p_src, p_dest):
     """
     Verschiebt einen Textabschnitt zwischen den Positionen 'm' und 'n' aus dem Quellabsatz `p_src` in den Zielabsatz `p_dest`.
@@ -423,7 +412,6 @@ def mv(m, n, p_src, p_dest):
     cp(m, n, p_src, p_dest)
     # Entfernen des kopierten Textabschnitts aus `p_src`
     rm(m, n, p_src)
-
 
 
 def ins_into_paragraph(str, m, p):
@@ -452,12 +440,13 @@ def ins_into_paragraph(str, m, p):
     for r in p.runs:
         l += len(r.text)
         if m <= l:
-            insert_position = m - (l - len(r.text))  # Berechnet die Einfügeposition innerhalb des aktuellen Textlaufs
+            insert_position = m - (
+                l - len(r.text)
+            )  # Berechnet die Einfügeposition innerhalb des aktuellen Textlaufs
             r.text = r.text[:insert_position] + str + r.text[insert_position:]
             break
 
     return p
-
 
 
 def replace_text_in_doc(m, p_start, n, p_end, doc, text):
