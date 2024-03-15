@@ -42,6 +42,23 @@ def doc_outer_text(doc):
     return fullText
 
 
+def doc_inner_text(doc):
+    """
+    Extrahiert den inneren Text eines Dokumentes durch Iteration über alle Tabellen und sammelt deren Inhalte.
+
+    Parameters:
+    - param doc: Das Dokument, von dem der innere Text extrahiert werden soll.
+      Das Objekt sollte eine Funktion oder Methode `iterate_tables` unterstützen, die die Iteration durch alle Tabellen im Dokument ermöglicht und deren Inhalte sammelt.
+
+    Return:
+    - return: Ein String, der den gesamten inneren Text des Dokumentes darstellt, basierend auf den Inhalten der Tabellen.
+
+    Raises:
+    - raises AttributeError: Wenn das übergebene `doc`-Objekt nicht die erforderliche Methode `iterate_tables` besitzt.
+    """
+    return iterate_tables(doc)
+
+
 def iterate_cells(row, func=lambda x: x.text):
     """
     Iterates over cells in a given row, applying a function to each cell and concatenating the results.
@@ -96,23 +113,6 @@ def iterate_tables(node, func=lambda x: x.text):
     return full_text
 
 
-def doc_inner_text(doc):
-    """
-    Extrahiert den inneren Text eines Dokumentes durch Iteration über alle Tabellen und sammelt deren Inhalte.
-
-    Parameters:
-    - param doc: Das Dokument, von dem der innere Text extrahiert werden soll.
-      Das Objekt sollte eine Funktion oder Methode `iterate_tables` unterstützen, die die Iteration durch alle Tabellen im Dokument ermöglicht und deren Inhalte sammelt.
-
-    Return:
-    - return: Ein String, der den gesamten inneren Text des Dokumentes darstellt, basierend auf den Inhalten der Tabellen.
-
-    Raises:
-    - raises AttributeError: Wenn das übergebene `doc`-Objekt nicht die erforderliche Methode `iterate_tables` besitzt.
-    """
-    return iterate_tables(doc)
-
-
 def duplicate(p):
     """
     Dupliziert ein gegebenes Objekt `p` tiefgehend und fügt das duplizierte Objekt in die Sequenz direkt nach `p` ein.
@@ -132,28 +132,6 @@ def duplicate(p):
     p_new = copy.deepcopy(p)
     p._p.addnext(p_new._p)
     return p_new
-
-
-def delete_paragraph(paragraph):
-    """
-    Entfernt einen Absatz aus einem Dokument. Diese Funktion setzt voraus, dass der Absatz ein Objekt mit einer internen Struktur ist,
-    die ein `_element`-Attribut besitzt. Das `_element`-Attribut repräsentiert den eigentlichen Absatz im Dokumentenbaum.
-    Nach dem Entfernen des Absatzes werden die Referenzen auf das Absatz-Element im übergebenen Absatzobjekt auf `None` gesetzt.
-
-    Parameters:
-    - param paragraph: Das Absatzobjekt, das aus seinem Dokument entfernt werden soll.
-      Es muss die Attribute `_element` und `_p` haben, wobei `_element` das XML-Element des Absatzes ist und `_p` eine Referenz darauf sein könnte.
-
-    Return:
-    - return: Nichts. Die Funktion modifiziert den Zustand des übergebenen Absatzes und seines Elterndokuments direkt.
-
-    Raises:
-    - raises AttributeError: Wenn das übergebene Absatzobjekt nicht die erforderlichen Attribute `_element` und `_p` besitzt.
-    - raises RemoveError: Wenn das Entfernen des Absatzes aus dem Dokumentenbaum fehlschlägt.
-    """
-    p = paragraph._element
-    p.getparent().remove(p)
-    paragraph._p = paragraph._element = None
 
 
 def append_paragraph(paragraph, text=None, style=None):
@@ -204,6 +182,33 @@ def delete_paragraph(paragraph):
     p = paragraph._element
     p.getparent().remove(p)
     paragraph._p = paragraph._element = None
+
+
+def delete_run(run, p):
+    """
+    Entfernt einen spezifischen Textlauf (`run`) aus einem Absatz (`p`). Diese Funktion durchläuft die Textläufe des Absatzes rückwärts,
+    um den zu entfernenden Textlauf zu finden und ihn dann aus dem Absatz zu entfernen.
+
+    Parameters:
+    - param run: Das Textlauf-Objekt, das aus dem Absatz entfernt werden soll. Es wird erwartet, dass dieses Objekt ein Attribut `_r` hat,
+      welches das zugrundeliegende XML-Element des Textlaufs repräsentiert.
+    - param p: Das Absatzobjekt, aus dem der Textlauf entfernt werden soll. Das Objekt sollte eine Liste von Textläufen in `p.runs` und
+      ein Attribut `_p` haben, welches das zugrundeliegende XML-Element des Absatzes repräsentiert.
+
+    Return:
+    - return: Das Textlauf-Objekt `run`, wenn es gefunden und erfolgreich entfernt wurde. Gibt `None` zurück, wenn der Textlauf im Absatz nicht gefunden wurde.
+
+    Raises:
+    - Es werden keine Exceptions direkt von dieser Funktion ausgelöst, aber durch die Verwendung von Attributen wie `_r` und `_p` besteht eine implizite
+      Abhängigkeit von der Struktur des Absatz- und Textlaufobjekts, die bei Nichteinhaltung zu Fehlern führen kann.
+    """
+    i = len(p.runs) - 1
+    while i >= 0:
+        if p.runs[i]._r == run._r:
+            p._p.remove(p.runs[i]._r)
+            return run
+        i -= 1
+    return None
 
 
 def in_which_run_is(m, p):
@@ -272,72 +277,51 @@ def at_which_position_in_its_run_is(m, p):
     return None
 
 
-def cp(m, n, p_src, p_dest):
+def ins(str, m, p):
     """
-    Kopiert einen Textabschnitt, der durch die Positionen 'm' und 'n' im Quellabsatz `p_src` definiert ist, in den Zielabsatz `p_dest`.
+    Fügt einen String 'str' an der Position 'm' in den Absatz 'p' ein.
 
     Parameters:
-    - param m: Die Startposition im Quellabsatz `p_src`, ab der der Text kopiert werden soll.
-    - param n: Die Endposition im Quellabsatz `p_src`, bis zu der der Text kopiert werden soll.
-    - param p_src: Das Quellabsatzobjekt, aus dem der Text kopiert wird. Es wird erwartet, dass dieses Objekt eine Liste von Textläufen (`runs`) enthält.
-    - param p_dest: Das Zielabsatzobjekt, zu dem der Text hinzugefügt wird.
-
-    Raises:
-    - Es werden keine spezifischen Exceptions direkt von dieser Funktion ausgelöst, aber die Funktion gibt `None` zurück, wenn `m` oder `n` außerhalb der gültigen Grenzen liegen, oder wenn die Start- und Endläufe nicht gefunden werden können.
-    """
-
-    # Überprüfung, ob die Start- und Endpositionen innerhalb des gültigen Bereichs des Textes liegen.
-    if m < 0 or n > len(p_src.text):
-        return
-    r_start = in_which_run_is(m, p_src)
-    r_finish = in_which_run_is(n, p_src)
-
-    # Überprüfung, ob Start- und Endläufe gefunden wurden.
-    if r_start == None or r_finish == None:
-        return
-
-    for i in range(r_start, r_finish + 1):
-        run = p_src.runs[i]
-        r_copy = copy.deepcopy(run)._r
-
-        # Einstellen der Start- und Endposition für den zu kopierenden Text im aktuellen Lauf.
-        a = 0
-        o = len(run.text)
-        if i == r_start:
-            a = at_which_position_in_its_run_is(m, p_src)
-        if i == r_finish:
-            o = at_which_position_in_its_run_is(n, p_src) + 1
-
-        # Setzen des Textes für den kopierten Lauf und Hinzufügen zum Zielabsatz.
-        r_copy.text = r_copy.text[a:o]
-        p_dest._p.append(r_copy)
-
-
-def remove_run(run, p):
-    """
-    Entfernt einen spezifischen Textlauf (`run`) aus einem Absatz (`p`). Diese Funktion durchläuft die Textläufe des Absatzes rückwärts,
-    um den zu entfernenden Textlauf zu finden und ihn dann aus dem Absatz zu entfernen.
-
-    Parameters:
-    - param run: Das Textlauf-Objekt, das aus dem Absatz entfernt werden soll. Es wird erwartet, dass dieses Objekt ein Attribut `_r` hat,
-      welches das zugrundeliegende XML-Element des Textlaufs repräsentiert.
-    - param p: Das Absatzobjekt, aus dem der Textlauf entfernt werden soll. Das Objekt sollte eine Liste von Textläufen in `p.runs` und
-      ein Attribut `_p` haben, welches das zugrundeliegende XML-Element des Absatzes repräsentiert.
+    - param str: Der einzufügende String.
+    - param m: Die Position im Absatz, an der 'str' eingefügt werden soll.
+    - param p: Das Absatzobjekt, in das eingefügt wird. Es wird erwartet, dass dieses Objekt eine Liste von Textläufen (`runs`) hat.
 
     Return:
-    - return: Das Textlauf-Objekt `run`, wenn es gefunden und erfolgreich entfernt wurde. Gibt `None` zurück, wenn der Textlauf im Absatz nicht gefunden wurde.
+    - return: Gibt den modifizierten Absatz 'p' zurück, in den 'str' an der Position 'm' eingefügt wurde.
 
     Raises:
-    - Es werden keine Exceptions direkt von dieser Funktion ausgelöst, aber durch die Verwendung von Attributen wie `_r` und `_p` besteht eine implizite
-      Abhängigkeit von der Struktur des Absatz- und Textlaufobjekts, die bei Nichteinhaltung zu Fehlern führen kann.
+    - Es werden keine spezifischen Exceptions ausgelöst, aber die Funktion berücksichtigt die Länge der `runs` und passt die Einfügeposition entsprechend an.
     """
-    i = len(p.runs) - 1
-    while i >= 0:
-        if p.runs[i]._r == run._r:
-            p._p.remove(p.runs[i]._r)
-            return run
-        i -= 1
-    return None
+    l = 0  # Akkumulierte Länge der Texte in den bisher durchlaufenen Textläufen
+
+    # Fall: Keine Textläufe vorhanden, direktes Einfügen in den Absatztext
+    if len(p.runs) == 0:
+        p.text = p.text[:m] + str + p.text[m:]
+        return p
+
+    # Einfügen in den entsprechenden Textlauf, wenn Textläufe vorhanden sind
+    for r in p.runs:
+        l += len(r.text)
+        if m <= l:
+            insert_position = m - (
+                l - len(r.text)
+            )  # Berechnet die Einfügeposition innerhalb des aktuellen Textlaufs
+            r.text = r.text[:insert_position] + str + r.text[insert_position:]
+            break
+
+    return p
+
+
+def cp(m, n, p_src, p_dest, p=0):
+    text_to_copy = ""  # Variable zum Speichern des zu kopierenden Textes
+    if m < 0 or n > len(p_src.text):
+        return
+    # Extrahieren des Textes aus dem Quellabsatz
+    for i in range(m, n + 1):
+        if i < len(p_src.text):
+            text_to_copy += p_src.text[i]
+    # Verwenden von insert_into_paragraph, um den extrahierten Text in den Zielabsatz einzufügen
+    ins(text_to_copy, p, p_dest)  # Annahme: Einfügen am Anfang des Zielabsatzes
 
 
 def rm(m, n, p):
@@ -390,7 +374,7 @@ def rm(m, n, p):
         p.runs[r_start].text = p.runs[r_start].text[:a]
         p.runs[r_finish].text = p.runs[r_finish].text[o + 1 :]
     for run in reversed(arr):
-        remove_run(run, p)
+        delete_run(run, p)
 
     return p
 
@@ -412,41 +396,6 @@ def mv(m, n, p_src, p_dest):
     cp(m, n, p_src, p_dest)
     # Entfernen des kopierten Textabschnitts aus `p_src`
     rm(m, n, p_src)
-
-
-def ins_into_paragraph(str, m, p):
-    """
-    Fügt einen String 'str' an der Position 'm' in den Absatz 'p' ein.
-
-    Parameters:
-    - param str: Der einzufügende String.
-    - param m: Die Position im Absatz, an der 'str' eingefügt werden soll.
-    - param p: Das Absatzobjekt, in das eingefügt wird. Es wird erwartet, dass dieses Objekt eine Liste von Textläufen (`runs`) hat.
-
-    Return:
-    - return: Gibt den modifizierten Absatz 'p' zurück, in den 'str' an der Position 'm' eingefügt wurde.
-
-    Raises:
-    - Es werden keine spezifischen Exceptions ausgelöst, aber die Funktion berücksichtigt die Länge der `runs` und passt die Einfügeposition entsprechend an.
-    """
-    l = 0  # Akkumulierte Länge der Texte in den bisher durchlaufenen Textläufen
-
-    # Fall: Keine Textläufe vorhanden, direktes Einfügen in den Absatztext
-    if len(p.runs) == 0:
-        p.text = p.text[:m] + str + p.text[m:]
-        return p
-
-    # Einfügen in den entsprechenden Textlauf, wenn Textläufe vorhanden sind
-    for r in p.runs:
-        l += len(r.text)
-        if m <= l:
-            insert_position = m - (
-                l - len(r.text)
-            )  # Berechnet die Einfügeposition innerhalb des aktuellen Textlaufs
-            r.text = r.text[:insert_position] + str + r.text[insert_position:]
-            break
-
-    return p
 
 
 def replace_text_in_doc(m, p_start, n, p_end, doc, text):
@@ -474,7 +423,7 @@ def replace_text_in_doc(m, p_start, n, p_end, doc, text):
         p = doc.paragraphs[p_start + 1]
         rm(0, n, p)
 
-    ins_into_paragraph(text, m, doc.paragraphs[p_start])
+    ins(text, m, doc.paragraphs[p_start])
 
 
 def extract_substring_between(m, p_start, n, p_end, docx):
