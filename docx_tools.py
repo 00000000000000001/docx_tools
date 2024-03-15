@@ -264,3 +264,38 @@ def replace_text_in_doc(m, p_start, n, p_end, doc, text):
         rm(0, n, p)
 
     ins_into_paragraph(text, m, doc.paragraphs[p_start])
+
+
+def extract_substring_between(m, p_start, n, p_end, docx):
+    """
+    Extrahiert einen Textbereich aus einem Docx-Dokument, beginnend bei der Position m im Absatz p_start
+    und endend bei der Position n im Absatz p_end.
+
+    :param m: Index, an dem der Text im Absatz p_start beginnt.
+    :param p_start: Index des Absatzes, in dem der Text beginnt.
+    :param n: Index, an dem der Text im Absatz p_end endet.
+    :param p_end: Index des Absatzes, in dem der Text endet.
+    :param docx: Das Docx-Dokument, aus dem der Text extrahiert werden soll.
+    :return: Der extrahierte Text als String.
+
+    :raises Exception: Wenn p_start oder p_end außerhalb der Grenzen der Absätze im Dokument liegen.
+    """
+    if p_start < 0 or p_start >= len(docx.paragraphs):
+        raise ValueError("p_start is out of bounds")
+    if p_end < 0 or p_end >= len(docx.paragraphs):
+        raise ValueError("p_end is out of bounds")
+
+    if p_start == p_end:
+        return docx.paragraphs[p_start].text[m:n]
+
+    string_parts = []
+    for i in range(p_start, p_end + 1):
+        p_text = docx.paragraphs[i].text
+        if i == p_start:
+            string_parts.append(p_text[m:])
+        elif i == p_end:
+            string_parts.append(p_text[:n])
+        else:
+            string_parts.append(p_text)
+
+    return "".join(string_parts)
