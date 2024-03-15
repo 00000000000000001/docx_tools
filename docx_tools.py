@@ -14,27 +14,57 @@ def doc_outer_text(doc):
     return fullText
 
 
-def iterate_cells(row):
+def iterate_cells(row, func=lambda x: x.text):
+    """
+    Iterates over cells in a given row, applying a function to each cell and concatenating the results.
+
+    Parameters:
+    - row: The row object containing cells to iterate over.
+    - func: A function that takes a cell object as input and returns a string. Defaults to extracting the cell's text.
+
+    Returns:
+    - A string that is the concatenation of the function's results for each cell in the row, with a newline character after each cell's output.
+    """
     full_text = ""
     for cell in row.cells:
-        full_text += cell.text + "\n"
+        full_text += func(cell) + "\n"
         if len(cell.tables) > 0:
-            full_text += iterate_tables(cell)
+            full_text += iterate_tables(cell, func)
     return full_text
 
 
-def iterate_rows(table):
+def iterate_rows(table, func=lambda x: x.text):
+    """
+    Iterates over rows in a given table, applying the iterate_cells function to each row.
+
+    Parameters:
+    - table: The table object containing rows to iterate over.
+    - func: A function to be passed to iterate_cells, which is applied to each cell.
+
+    Returns:
+    - A string that is the concatenation of all text from all cells in all rows of the table.
+    """
     full_text = ""
     for row in table.rows:
-        full_text += iterate_cells(row)
+        full_text += iterate_cells(row, func)
     return full_text
 
 
-def iterate_tables(node):
+def iterate_tables(node, func=lambda x: x.text):
+    """
+    Iterates over tables in a given node (e.g., a document or another table cell), applying the iterate_rows function to each table.
+
+    Parameters:
+    - node: The node object containing tables to iterate over.
+    - func: A function to be passed to iterate_rows, which is then applied to each cell in each row of each table.
+
+    Returns:
+    - A string that is the concatenation of all text from all cells in all tables within the node.
+    """
     full_text = ""
     if len(node.tables) > 0:
         for table in node.tables:
-            full_text += iterate_rows(table)
+            full_text += iterate_rows(table, func)
     return full_text
 
 
