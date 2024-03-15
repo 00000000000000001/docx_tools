@@ -4,7 +4,7 @@ from docx.oxml.shared import OxmlElement
 
 
 def doc_text(doc):
-    return doc_outer_text(doc) + "\n" + doc_inner_text(doc)
+    return doc_outer_text(doc) + doc_inner_text(doc)
 
 
 def doc_outer_text(doc):
@@ -40,6 +40,15 @@ def iterate_tables(node):
 
 def doc_inner_text(doc):
     return iterate_tables(doc)
+
+
+def tables_text(doc):
+    fullText = ""
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                fullText += cell.text
+    return fullText
 
 
 def duplicate(p):
@@ -146,7 +155,7 @@ def remove_run(run, p):
 
 
 def rm(m, n, p):
-    if m < 0 or m > len(p.text) - 1 or n < 0 or n > len(p.text) - 1:
+    if m < 0 or m > len(p.text) or n < 0 or n > len(p.text):
         return
 
     r_start = in_which_run_is(m, p)
@@ -222,6 +231,6 @@ def replace_text_in_doc(m, p_start, n, p_end, doc, text):
             delete_paragraph(p)
 
         p = doc.paragraphs[p_start + 1]
-        rm(0, n - 1, p)
+        rm(0, n, p)
 
     ins_into_paragraph(text, m, doc.paragraphs[p_start])

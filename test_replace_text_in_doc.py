@@ -27,4 +27,4 @@ def test_replace_text_in_doc4():
     doc.add_paragraph("FOO")
     doc.add_paragraph("BAR")
     docx_tools.replace_text_in_doc(1, 0, 2, 1, doc, "Hello")
-    assert docx_tools.doc_outer_text(doc) == "FHelloR"
+    assert docx_tools.doc_outer_text(doc) == "FHello"
