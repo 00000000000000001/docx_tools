@@ -4,38 +4,10 @@ from docx.text.paragraph import Paragraph
 
 
 def combineDocText(doc):
-    """
-    Kombiniert den äußeren und inneren Text eines Dokumentes und gibt diesen zurück.
-
-    Parameters:
-    - param doc: Das Dokument, von dem der Text extrahiert werden soll.
-      Dies könnte ein Objekt sein, das sowohl `doc_outer_text` als auch `doc_inner_text` Methoden/Funktionen unterstützt.
-
-    Return:
-    - return: Ein String, der die Kombination aus dem äußeren und inneren Text des Dokumentes darstellt.
-
-    Raises:
-    - raises AttributeError: Wenn das übergebene `doc`-Objekt nicht die erforderlichen Methoden `doc_outer_text` und `doc_inner_text` unterstützt.
-    """
     return extractOuterDocText(doc) + extractInnerDocText(doc)
 
 
 def extractOuterDocText(doc):
-    """
-    Extrahiert den äußeren Text eines Dokumentes, indem es den Text jedes Paragraphen sammelt und zusammenfügt.
-
-    Parameters:
-    - param doc: Das Dokument, von dem der äußere Text extrahiert werden soll.
-      Dies könnte ein Objekt sein, das eine Eigenschaft `paragraphs` hat, welche eine Liste von Paragraph-Objekten ist,
-      wobei jedes Paragraph-Objekt eine Eigenschaft `text` hat, die den Text des Paragraphen als String enthält.
-
-    Return:
-    - return: Ein String, der den gesamten äußeren Text des Dokumentes darstellt.
-
-    Raises:
-    - raises AttributeError: Wenn das übergebene `doc`-Objekt nicht die erforderliche Eigenschaft `paragraphs` besitzt oder
-      wenn ein Paragraph-Objekt innerhalb von `doc.paragraphs` nicht die Eigenschaft `text` besitzt.
-    """
     fullText = ""
     for p in doc.paragraphs:
         fullText += p.text
@@ -43,33 +15,10 @@ def extractOuterDocText(doc):
 
 
 def extractInnerDocText(doc):
-    """
-    Extrahiert den inneren Text eines Dokumentes durch Iteration über alle Tabellen und sammelt deren Inhalte.
-
-    Parameters:
-    - param doc: Das Dokument, von dem der innere Text extrahiert werden soll.
-      Das Objekt sollte eine Funktion oder Methode `iterate_tables` unterstützen, die die Iteration durch alle Tabellen im Dokument ermöglicht und deren Inhalte sammelt.
-
-    Return:
-    - return: Ein String, der den gesamten inneren Text des Dokumentes darstellt, basierend auf den Inhalten der Tabellen.
-
-    Raises:
-    - raises AttributeError: Wenn das übergebene `doc`-Objekt nicht die erforderliche Methode `iterate_tables` besitzt.
-    """
     return concatTableTexts(doc)
 
 
 def concatCellTexts(row, func=lambda cell: cell.text):
-    """
-    Iterates over cells in a given row, applying a function to each cell and concatenating the results.
-
-    Parameters:
-    - row: The row object containing cells to iterate over.
-    - func: A function that takes a cell object as input and returns a string. Defaults to extracting the cell's text.
-
-    Returns:
-    - A string that is the concatenation of the function's results for each cell in the row, with a newline character after each cell's output.
-    """
     full_text = ""
     for cell in row.cells:
         full_text += func(cell) + "\n"
@@ -79,16 +28,6 @@ def concatCellTexts(row, func=lambda cell: cell.text):
 
 
 def concatRowTexts(table, func=lambda cell: cell.text):
-    """
-    Iterates over rows in a given table, applying the iterate_cells function to each row.
-
-    Parameters:
-    - table: The table object containing rows to iterate over.
-    - func: A function to be passed to iterate_cells, which is applied to each cell.
-
-    Returns:
-    - A string that is the concatenation of all text from all cells in all rows of the table.
-    """
     full_text = ""
     for row in table.rows:
         full_text += concatCellTexts(row, func)
@@ -96,16 +35,6 @@ def concatRowTexts(table, func=lambda cell: cell.text):
 
 
 def concatTableTexts(node, func=lambda cell: cell.text):
-    """
-    Iterates over tables in a given node (e.g., a document or another table cell), applying the iterate_rows function to each table.
-
-    Parameters:
-    - node: The node object containing tables to iterate over.
-    - func: A function to be passed to iterate_rows, which is then applied to each cell in each row of each table.
-
-    Returns:
-    - A string that is the concatenation of all text from all cells in all tables within the node.
-    """
     full_text = ""
     if len(node.tables) > 0:
         for table in node.tables:
@@ -114,42 +43,12 @@ def concatTableTexts(node, func=lambda cell: cell.text):
 
 
 def duplicatePara(para):
-    """
-    Dupliziert ein gegebenes Objekt `p` tiefgehend und fügt das duplizierte Objekt in die Sequenz direkt nach `p` ein.
-
-    Parameters:
-    - param p: Das Objekt, das dupliziert werden soll.
-      Dieses Objekt muss ein Attribut `_p` haben, welches wiederum die Methode `addnext` unterstützen muss, um das duplizierte Objekt in die Sequenz einfügen zu können.
-
-    Return:
-    - return: Das duplizierte Objekt `p_new`.
-
-    Raises:
-    - raises AttributeError: Wenn das übergebene Objekt `p` nicht das erforderliche Attribut `_p` oder die Methode `addnext` besitzt.
-    - raises CopyError: Wenn der tiefe Kopiervorgang (deep copy) fehlschlägt.
-    """
-
     p_new = copy.deepcopy(para)
     para._p.addnext(p_new._p)
     return p_new
 
 
 def appendPara(para, txt=None, style=None):
-    """
-    Fügt einen neuen Absatz nach einem gegebenen Absatz hinzu. Optional kann der Text und der Stil des neuen Absatzes spezifiziert werden.
-
-    Parameters:
-    - param paragraph: Das Absatzobjekt, nach dem der neue Absatz eingefügt werden soll.
-      Es wird erwartet, dass dieses Objekt ein `_p` Attribut für den aktuellen Absatz und ein `_parent` Attribut für das Elternobjekt hat.
-    - param text: Optionaler Text, der dem neuen Absatz hinzugefügt wird. Default ist None.
-    - param style: Optionaler Stil, der auf den neuen Absatz angewendet wird. Default ist None.
-
-    Return:
-    - return: Das Objekt des neu eingefügten Absatzes.
-
-    Raises:
-    - raises Exception: Wenn beim Einfügen des neuen Absatzes ein Fehler auftritt, wird eine allgemeine Exception geworfen.
-    """
     try:
         new_p = OxmlElement("w:p")
         para._p.addnext(new_p)
@@ -212,34 +111,15 @@ def deleteTextRun(run, para):
 
 
 def findRunIndex(pos, para):
-    """
-    Bestimmt den Index des Textlaufs (`run`), in dem sich das Zeichen an Position 'm' im Text des Absatzes 'p' befindet.
-
-    Parameters:
-    - param m: Die Position des Zeichens im Gesamttext des Absatzes, für die der zugehörige Textlauf ermittelt werden soll.
-    - param p: Das Absatzobjekt, das die Textläufe (`runs`) enthält. Es wird erwartet, dass dieses Objekt eine Eigenschaft `text` für den Gesamttext
-      und eine Liste `runs` für die Textläufe hat.
-
-    Return:
-    - return: Der Index des Textlaufs, der das Zeichen an Position 'm' enthält, oder `None`, wenn 'm' außerhalb der Grenzen des Absatztextes liegt
-      oder kein entsprechender Textlauf gefunden wird.
-
-    Raises:
-    - Es werden keine Exceptions direkt von dieser Funktion ausgelöst, aber sie gibt `None` zurück, wenn die Bedingungen nicht erfüllt sind.
-    """
-    # Überprüft, ob 'm' außerhalb der Grenzen des Absatztextes liegt.
     if pos < 0 or pos >= len(para.text):
         return None
 
     cumulative_length = 0
-    # Durchläuft die Textläufe, um sowohl den Index als auch den Textlauf selbst zu erhalten.
     for index, run in enumerate(para.runs):
         cumulative_length += len(run.text)
-        # Wenn die kumulative Länge nach Hinzufügen dieses Textlaufs 'm' einschließt, wird der Index zurückgegeben.
         if cumulative_length > pos:
             return index
 
-    # Wenn 'm' in keinem der Textläufe gefunden wird, obwohl dies durch die anfängliche Überprüfung abgefangen werden sollte.
     return None
 
 
@@ -247,9 +127,7 @@ def findPosInRun(pos, para):
     if pos < 0 or pos >= len(para.text):
         return None
 
-    cumulative_length = (
-        0
-    )
+    cumulative_length = 0
     for _, run in enumerate(para.runs):
         previous_cumulative_length = cumulative_length
         cumulative_length += len(run.text)
@@ -261,7 +139,7 @@ def findPosInRun(pos, para):
 
 
 def insertStrIntoPara(para, str, pos):
-    l = 0 
+    l = 0
 
     if len(para.runs) == 0:
         para.text = para.text[:pos] + str + para.text[pos:]
@@ -270,9 +148,7 @@ def insertStrIntoPara(para, str, pos):
     for r in para.runs:
         l += len(r.text)
         if pos <= l:
-            insert_position = pos - (
-                l - len(r.text)
-            )
+            insert_position = pos - (l - len(r.text))
             r.text = r.text[:insert_position] + str + r.text[insert_position:]
             break
 
