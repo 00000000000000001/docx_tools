@@ -3,7 +3,7 @@ from docx.oxml import OxmlElement
 from docx.text.paragraph import Paragraph
 
 
-def doc_text(doc):
+def combineDocText(doc):
     """
     Kombiniert den äußeren und inneren Text eines Dokumentes und gibt diesen zurück.
 
@@ -17,10 +17,10 @@ def doc_text(doc):
     Raises:
     - raises AttributeError: Wenn das übergebene `doc`-Objekt nicht die erforderlichen Methoden `doc_outer_text` und `doc_inner_text` unterstützt.
     """
-    return doc_outer_text(doc) + doc_inner_text(doc)
+    return extractOuterDocText(doc) + extractInnerDocText(doc)
 
 
-def doc_outer_text(doc):
+def extractOuterDocText(doc):
     """
     Extrahiert den äußeren Text eines Dokumentes, indem es den Text jedes Paragraphen sammelt und zusammenfügt.
 
@@ -42,7 +42,7 @@ def doc_outer_text(doc):
     return fullText
 
 
-def doc_inner_text(doc):
+def extractInnerDocText(doc):
     """
     Extrahiert den inneren Text eines Dokumentes durch Iteration über alle Tabellen und sammelt deren Inhalte.
 
@@ -56,10 +56,10 @@ def doc_inner_text(doc):
     Raises:
     - raises AttributeError: Wenn das übergebene `doc`-Objekt nicht die erforderliche Methode `iterate_tables` besitzt.
     """
-    return iterate_tables(doc)
+    return concatTableTexts(doc)
 
 
-def iterate_cells(row, func=lambda x: x.text):
+def concatCellTexts(row, func=lambda x: x.text):
     """
     Iterates over cells in a given row, applying a function to each cell and concatenating the results.
 
@@ -74,11 +74,11 @@ def iterate_cells(row, func=lambda x: x.text):
     for cell in row.cells:
         full_text += func(cell) + "\n"
         if len(cell.tables) > 0:
-            full_text += iterate_tables(cell, func)
+            full_text += concatTableTexts(cell, func)
     return full_text
 
 
-def iterate_rows(table, func=lambda x: x.text):
+def concatRowTexts(table, func=lambda x: x.text):
     """
     Iterates over rows in a given table, applying the iterate_cells function to each row.
 
@@ -91,11 +91,11 @@ def iterate_rows(table, func=lambda x: x.text):
     """
     full_text = ""
     for row in table.rows:
-        full_text += iterate_cells(row, func)
+        full_text += concatCellTexts(row, func)
     return full_text
 
 
-def iterate_tables(node, func=lambda x: x.text):
+def concatTableTexts(node, func=lambda x: x.text):
     """
     Iterates over tables in a given node (e.g., a document or another table cell), applying the iterate_rows function to each table.
 
@@ -109,11 +109,11 @@ def iterate_tables(node, func=lambda x: x.text):
     full_text = ""
     if len(node.tables) > 0:
         for table in node.tables:
-            full_text += iterate_rows(table, func)
+            full_text += concatRowTexts(table, func)
     return full_text
 
 
-def duplicate(p):
+def duplicateObj(p):
     """
     Dupliziert ein gegebenes Objekt `p` tiefgehend und fügt das duplizierte Objekt in die Sequenz direkt nach `p` ein.
 
@@ -134,7 +134,7 @@ def duplicate(p):
     return p_new
 
 
-def append_paragraph(paragraph, text=None, style=None):
+def appendPara(paragraph, text=None, style=None):
     """
     Fügt einen neuen Absatz nach einem gegebenen Absatz hinzu. Optional kann der Text und der Stil des neuen Absatzes spezifiziert werden.
 
@@ -163,7 +163,7 @@ def append_paragraph(paragraph, text=None, style=None):
         print(f"Error when inserting paragraph: {e}")
 
 
-def delete_paragraph(paragraph):
+def deletePara(paragraph):
     """
     Entfernt einen Absatz aus seinem übergeordneten Element im Dokument. Diese Funktion ändert die internen Referenzen des Absatzobjektes,
     indem sie `_element` und `_p` auf `None` setzt, um anzuzeigen, dass der Absatz nicht länger Teil des Dokuments ist.
@@ -184,7 +184,7 @@ def delete_paragraph(paragraph):
     paragraph._p = paragraph._element = None
 
 
-def delete_run(run, p):
+def deleteTextRun(run, p):
     """
     Entfernt einen spezifischen Textlauf (`run`) aus einem Absatz (`p`). Diese Funktion durchläuft die Textläufe des Absatzes rückwärts,
     um den zu entfernenden Textlauf zu finden und ihn dann aus dem Absatz zu entfernen.
@@ -211,7 +211,7 @@ def delete_run(run, p):
     return None
 
 
-def in_which_run_is(m, p):
+def findRunIndex(m, p):
     """
     Bestimmt den Index des Textlaufs (`run`), in dem sich das Zeichen an Position 'm' im Text des Absatzes 'p' befindet.
 
@@ -243,7 +243,7 @@ def in_which_run_is(m, p):
     return None
 
 
-def at_which_position_in_its_run_is(m, p):
+def findPosInRun(m, p):
     """
     Ermittelt die Position des Zeichens an der Stelle 'm' innerhalb seines Textlaufs im Absatz 'p'.
 
@@ -277,7 +277,7 @@ def at_which_position_in_its_run_is(m, p):
     return None
 
 
-def ins(str, m, p):
+def insertStrIntoPara(str, m, p):
     """
     Fügt einen String 'str' an der Position 'm' in den Absatz 'p' ein.
 
@@ -312,7 +312,7 @@ def ins(str, m, p):
     return p
 
 
-def cp(m, n, p_src, p_dest, p=0):
+def copyTextSegment(m, n, p_src, p_dest, p=0):
     text_to_copy = ""  # Variable zum Speichern des zu kopierenden Textes
     if m < 0 or n > len(p_src.text):
         return
@@ -321,10 +321,10 @@ def cp(m, n, p_src, p_dest, p=0):
         if i < len(p_src.text):
             text_to_copy += p_src.text[i]
     # Verwenden von insert_into_paragraph, um den extrahierten Text in den Zielabsatz einzufügen
-    ins(text_to_copy, p, p_dest)  # Annahme: Einfügen am Anfang des Zielabsatzes
+    insertStrIntoPara(text_to_copy, p, p_dest)  # Annahme: Einfügen am Anfang des Zielabsatzes
 
 
-def rm(m, n, p):
+def removeTextSegment(m, n, p):
     """
     Entfernt Text zwischen den Positionen 'm' und 'n' aus dem Absatz 'p'.
 
@@ -345,8 +345,8 @@ def rm(m, n, p):
         return None
 
     # Ermitteln der Textläufe, in denen 'm' und 'n' liegen
-    r_start = in_which_run_is(m, p)
-    r_finish = in_which_run_is(n, p)
+    r_start = findRunIndex(m, p)
+    r_finish = findRunIndex(n, p)
 
     if r_start == None or r_finish == None:
         return None
@@ -361,9 +361,9 @@ def rm(m, n, p):
         run = p.runs[i]
 
         if i == r_start:
-            a = at_which_position_in_its_run_is(m, p)
+            a = findPosInRun(m, p)
         if i == r_finish:
-            o = at_which_position_in_its_run_is(n, p)
+            o = findPosInRun(n, p)
         if i > r_start and i < r_finish:
             arr.append(run)
 
@@ -374,12 +374,12 @@ def rm(m, n, p):
         p.runs[r_start].text = p.runs[r_start].text[:a]
         p.runs[r_finish].text = p.runs[r_finish].text[o + 1 :]
     for run in reversed(arr):
-        delete_run(run, p)
+        deleteTextRun(run, p)
 
     return p
 
 
-def mv(m, n, p_src, p_dest):
+def moveTextSegment(m, n, p_src, p_dest):
     """
     Verschiebt einen Textabschnitt zwischen den Positionen 'm' und 'n' aus dem Quellabsatz `p_src` in den Zielabsatz `p_dest`.
 
@@ -393,12 +393,12 @@ def mv(m, n, p_src, p_dest):
     - Es werden keine spezifischen Exceptions ausgelöst, aber `cp` und `rm` führen jeweils eigene Gültigkeitsprüfungen durch und können in bestimmten Fällen `None` zurückgeben.
     """
     # Kopieren des Textabschnitts von `p_src` nach `p_dest`
-    cp(m, n, p_src, p_dest)
+    copyTextSegment(m, n, p_src, p_dest)
     # Entfernen des kopierten Textabschnitts aus `p_src`
-    rm(m, n, p_src)
+    removeTextSegment(m, n, p_src)
 
 
-def replace_text_in_doc(m, p_start, n, p_end, doc, text):
+def replaceDocTextSegment(m, p_start, n, p_end, doc, text):
     """
     Ersetzt einen Textabschnitt eines Docx-Dokument durch einen übergebenen String.
 
@@ -411,22 +411,22 @@ def replace_text_in_doc(m, p_start, n, p_end, doc, text):
     - param text: Text als String der in das Dokument eingesetzt werden soll.
     """
     if p_start == p_end:
-        rm(m, n, doc.paragraphs[p_start])
+        removeTextSegment(m, n, doc.paragraphs[p_start])
     else:
         p = doc.paragraphs[p_start]
-        rm(m, len(p.text) - 1, p)
+        removeTextSegment(m, len(p.text) - 1, p)
 
         for _ in range(p_start + 1, p_end):
             p = doc.paragraphs[p_start + 1]
-            delete_paragraph(p)
+            deletePara(p)
 
         p = doc.paragraphs[p_start + 1]
-        rm(0, n, p)
+        removeTextSegment(0, n, p)
 
-    ins(text, m, doc.paragraphs[p_start])
+    insertStrIntoPara(text, m, doc.paragraphs[p_start])
 
 
-def extract_substring_between(m, p_start, n, p_end, docx):
+def extractTextBetween(m, p_start, n, p_end, docx):
     """
     Extrahiert einen Textbereich aus einem Docx-Dokument, beginnend bei der Position m im Absatz p_start
     und endend bei der Position n im Absatz p_end.

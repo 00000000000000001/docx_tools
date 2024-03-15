@@ -1,4 +1,4 @@
-from docx_tools import cp
+from docx_tools import copyTextSegment
 from docx import Document
 
 def test_cp():
@@ -11,32 +11,32 @@ def test_cp():
     p_src.add_run("hijkl").italic = True
     p_dest = document.add_paragraph("")
 
-    cp(5, 7, p_src, p_dest)
+    copyTextSegment(5, 7, p_src, p_dest)
     assert p_dest.text == "fgh"
     p_dest._p.clear()
 
-    cp(0, 0, p_src, p_dest)
+    copyTextSegment(0, 0, p_src, p_dest)
     assert p_dest.text == "a"
     p_dest._p.clear()
 
-    cp(0, 2, p_src, p_dest)
+    copyTextSegment(0, 2, p_src, p_dest)
     assert p_dest.text == "abc"
     p_dest._p.clear()
 
-    cp(0, 3, p_src, p_dest)
+    copyTextSegment(0, 3, p_src, p_dest)
     assert p_dest.text == "abcd"
     p_dest._p.clear()
 
-    cp(0, 11, p_src, p_dest)
+    copyTextSegment(0, 11, p_src, p_dest)
     assert p_dest.text == "abcdefghijkl"
     p_dest._p.clear()
 
-    cp(7, 11, p_src, p_dest)
+    copyTextSegment(7, 11, p_src, p_dest)
     assert p_dest.text == "hijkl"
     p_dest._p.clear()
 
-    cp(11, 11, p_src, p_dest)
+    copyTextSegment(11, 11, p_src, p_dest)
     assert p_dest.text == "l"
     p_dest._p.clear()
 
-    cp(0, 11, p_src, p_dest)
+    copyTextSegment(0, 11, p_src, p_dest)

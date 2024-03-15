@@ -1,5 +1,5 @@
 from docx import Document
-from docx_tools import doc_inner_text
+from docx_tools import extractInnerDocText
 
 def test_finds_all_content():
     doc = Document()
@@ -19,12 +19,12 @@ def test_finds_all_content():
         for spalten_index, zelle in enumerate(zeile.cells):
             zelle.text = worte[zeilen_index][spalten_index]
 
-    assert 'Wort1' in doc_inner_text(doc)
-    assert 'Wort2' in doc_inner_text(doc)
-    assert 'Wort3' in doc_inner_text(doc)
-    assert 'Wort4' in doc_inner_text(doc)
-    assert 'Wort5' in doc_inner_text(doc)
-    assert 'Wort6' in doc_inner_text(doc)
-    assert 'Wort7' in doc_inner_text(doc)
-    assert 'Wort8' in doc_inner_text(doc)
-    assert 'Wort9' in doc_inner_text(doc)
+    assert 'Wort1' in extractInnerDocText(doc)
+    assert 'Wort2' in extractInnerDocText(doc)
+    assert 'Wort3' in extractInnerDocText(doc)
+    assert 'Wort4' in extractInnerDocText(doc)
+    assert 'Wort5' in extractInnerDocText(doc)
+    assert 'Wort6' in extractInnerDocText(doc)
+    assert 'Wort7' in extractInnerDocText(doc)
+    assert 'Wort8' in extractInnerDocText(doc)
+    assert 'Wort9' in extractInnerDocText(doc)
