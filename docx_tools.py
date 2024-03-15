@@ -4,19 +4,42 @@ from docx.oxml.shared import OxmlElement
 
 
 def doc_text(doc):
+    return doc_outer_text(doc) + "\n" + doc_inner_text(doc)
+
+
+def doc_outer_text(doc):
     fullText = ""
     for p in doc.paragraphs:
         fullText += p.text
     return fullText
 
 
-def tables_text(doc):
-    fullText = ""
-    for table in doc.tables:
-        for row in table.rows:
-            for cell in row.cells:
-                fullText += cell.text
-    return fullText
+def iterate_cells(row):
+    full_text = ""
+    for cell in row.cells:
+        full_text += cell.text + "\n"
+        if len(cell.tables) > 0:
+            full_text += iterate_tables(cell)
+    return full_text
+
+
+def iterate_rows(table):
+    full_text = ""
+    for row in table.rows:
+        full_text += iterate_cells(row)
+    return full_text
+
+
+def iterate_tables(node):
+    full_text = ""
+    if len(node.tables) > 0:
+        for table in node.tables:
+            full_text += iterate_rows(table)
+    return full_text
+
+
+def doc_inner_text(doc):
+    return iterate_tables(doc)
 
 
 def duplicate(p):
